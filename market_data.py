@@ -12,8 +12,8 @@ class AssetMove:
     prev_value: float
     diff: float
     diff_pct: float
-    big_move: bool = False           # 急騰・急落フラグ
-    crossed_level: Optional[str] = None  # 節目説明文字列
+    big_move: bool = False
+    crossed_level: Optional[str] = None
     direction: Optional[str] = None  # "up" / "down" / None
 
 
@@ -39,8 +39,12 @@ def _fetch_series(symbol: str, days: int = 5):
     return float(last["Close"]), float(prev["Close"])
 
 
-def _build_asset(name: str, symbol: str, big_move_threshold_pct: Optional[float] = None,
-                 levels: Optional[List[float]] = None) -> AssetMove:
+def _build_asset(
+    name: str,
+    symbol: str,
+    big_move_threshold_pct: Optional[float] = None,
+    levels: Optional[List[float]] = None,
+) -> AssetMove:
     value, prev_value = _fetch_series(symbol)
     diff = value - prev_value
     diff_pct = diff / prev_value * 100 if prev_value != 0 else 0.0
@@ -76,7 +80,7 @@ def _build_asset(name: str, symbol: str, big_move_threshold_pct: Optional[float]
 def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
     # 日本株
     nk225 = _build_asset("日経平均", "^N225")
-    topix = _build_asset("TOPIX", "^TOPX")
+    topix = _build_asset("TOPIX", "998405.T")  # Yahoo! JAPAN TOPIX指数[web:600][web:610]
 
     # 為替コア
     usd_jpy = _build_asset("ドル円", "JPY=X")
@@ -85,9 +89,7 @@ def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
     # コモディティ・仮想通貨・その他
     gold = _build_asset("金先物", "GC=F", big_move_threshold_pct=2.0,
                         levels=[2000, 2100, 2200])
-    crude = _build_asset("原油先物", "原油", big_move_threshold_pct=3.0)  # CL=F を使う
-    crude.symbol = "CL=F"
-
+    crude = _build_asset("原油先物", "CL=F", big_move_threshold_pct=3.0)
     btc = _build_asset("ビットコイン", "BTC-USD", big_move_threshold_pct=5.0,
                        levels=[60000, 65000, 70000])
 
