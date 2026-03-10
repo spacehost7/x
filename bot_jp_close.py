@@ -8,7 +8,6 @@ def main() -> None:
     snapshot = get_market_snapshot()
 
     nk = snapshot["core"]["nk225"]
-    tp = snapshot["core"]["topix"]
     uj = snapshot["core"]["usd_jpy"]
     eu = snapshot["core"]["eur_usd"]
 
@@ -40,7 +39,6 @@ def main() -> None:
 
 【コア指標】（必ずコメントに含めること）
 - 日経平均: 終値 {nk.value:.2f}、前日比 {nk.diff:+.2f} ({nk.diff_pct:+.2f}%)
-- TOPIX: 終値 {tp.value:.2f}、前日比 {tp.diff:+.2f} ({tp.diff_pct:+.2f}%)
 - ドル円: 終値 {uj.value:.3f}、前日比 {uj.diff:+.3f} ({uj.diff_pct:+.2f}%)
 - ユーロドル: 終値 {eu.value:.5f}、前日比 {eu.diff:+.5f} ({eu.diff_pct:+.2f}%)
 
