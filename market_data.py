@@ -78,9 +78,8 @@ def _build_asset(
 
 
 def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
-    # 日本株
+    # 日本株（TOPIXは使わない）
     nk225 = _build_asset("日経平均", "^N225")
-    topix = _build_asset("TOPIX", "998405.T")  # Yahoo! JAPAN TOPIX指数[web:600][web:610]
 
     # 為替コア
     usd_jpy = _build_asset("ドル円", "JPY=X")
@@ -100,7 +99,6 @@ def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
     return {
         "core": {
             "nk225": nk225,
-            "topix": topix,
             "usd_jpy": usd_jpy,
             "eur_usd": eur_usd,
         },
