@@ -19,12 +19,7 @@ def generate_with_claude(prompt: str) -> str:
         model=CLAUDE_MODEL,
         max_tokens=260,
         temperature=0.7,
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
+        messages=[{"role": "user", "content": prompt}],
     )
 
     content = resp.content
@@ -46,7 +41,7 @@ def post_to_x(text: str) -> None:
         access_token=X_ACCESS_TOKEN,
         access_token_secret=X_ACCESS_TOKEN_SECRET,
     )
-    client.create_tweet(text=text)
+    client.create_tweet(text=text)  # [web:489][web:512]
 
 
 def now_jst() -> datetime.datetime:
