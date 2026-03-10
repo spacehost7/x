@@ -11,7 +11,7 @@ on:
 
 jobs:
   jp-morning:
-    if: github.event.schedule == '25-35/5 2 * * 1-5'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -37,8 +37,9 @@ jobs:
           python bot_jp_morning.py
 
   jp-close:
-    if: github.event.schedule == '25-45/5 6 * * 1-5'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    steps:
 
     steps:
       - uses: actions/checkout@v4
