@@ -1,18 +1,20 @@
 # bot_jp_close.py
 
-from datetime import datetime
-from llm_and_x import post_to_x
+from llm_and_x import now_jst, generate_with_claude, post_to_x
 
-def build_safe_close_text() -> str:
-    now = datetime.now()
-    date_str = now.strftime("%Y-%m-%d %H:%M")
-    return f"日本株 後場テスト投稿（{date_str}）"
+def build_close_text() -> str:
+    now = now_jst()
+    date_str = now.strftime("%Y-%m-%d")
+    header = f"日本株 後場まとめ（{date_str}）\n"
+    body = generate_with_claude("日本株 後場のテスト要約を80文字以内で作成して。")
+    full = header + body
+    return full[:260]
 
 def main():
-    print("ENTRY_CLOSE")              # ログ確認用
-    text = build_safe_close_text()
-    print("TEXT_LEN_CLOSE:", len(text))
-    print("TEXT_CLOSE:", text)
+    print("ENTRY_CLOSE")
+    text = build_close_text()
+    print("CLOSE_TEXT_LEN:", len(text))
+    print("CLOSE_TEXT:", text)
     post_to_x(text)
     print("END_CLOSE")
 
