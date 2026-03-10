@@ -1,8 +1,12 @@
-from datetime import datetime
+# llm_and_x.py
 
-def build_safe_close_text(summary: str) -> str:
-    date_str = datetime.now().strftime("%Y-%m-%d")
-    base = f"日本株 後場まとめ（{date_str}）\n"
-    # summary は 50〜80文字くらいに事前に切り詰める
-    body = summary[:80]
-    return base + body
+def post_to_x(text: str):
+    print("POST_TO_X_TEXT_LEN:", len(text))
+    print("POST_TO_X_TEXT:", text)
+
+    try:
+        resp = client.create_tweet(text=text)
+        print("CREATE_TWEET_RESPONSE:", resp)
+    except Exception as e:
+        print("CREATE_TWEET_ERROR:", repr(e))
+        raise
