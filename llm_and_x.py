@@ -14,16 +14,21 @@ X_ACCESS_TOKEN = os.environ["X_ACCESS_TOKEN"]
 X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
 
-def generate_with_claude(prompt: str, max_tokens: int = 512, temperature: float = 0.7) -> str:
+def generate_with_claude(prompt: str) -> str:
     resp = client_llm.messages.create(
         model=CLAUDE_MODEL,
-        max_tokens=max_tokens,
-        temperature=temperature,
-        messages=[{"role": "user", "content": prompt}],
+        max_tokens=260,
+        temperature=0.7,
+        messages=[
+            {
+                "role": "user",
+                "content": prompt,
+            }
+        ],
     )
 
     content = resp.content
-    if isinstance(content, list) and len(content) > 0:
+    if isinstance(content, list) and content:
         part = content[0]
         if isinstance(part, dict) and "text" in part:
             return part["text"].strip()
@@ -34,17 +39,14 @@ def generate_with_claude(prompt: str, max_tokens: int = 512, temperature: float 
     return str(resp)
 
 
-def post_to_x(text: str) -> str:
+def post_to_x(text: str) -> None:
     client = tweepy.Client(
         consumer_key=X_API_KEY,
         consumer_secret=X_API_SECRET,
         access_token=X_ACCESS_TOKEN,
         access_token_secret=X_ACCESS_TOKEN_SECRET,
     )
-
-    resp = client.create_tweet(text=text)  # v2 公式の推奨メソッド[web:489]
-    tweet_id = resp.data.get("id")
-    return f"https://x.com/i/web/status/{tweet_id}"
+    client.create_tweet(text=text)
 
 
 def now_jst() -> datetime.datetime:
