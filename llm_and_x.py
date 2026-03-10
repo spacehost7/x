@@ -1,49 +1,49 @@
-# llm_and_x.py
-
 import os
-from datetime import datetime, timedelta, timezone
-
+import datetime
 import tweepy
+from anthropic import Anthropic
 
-# ===== 時刻（JST） =====
+CLAUDE_MODEL = "claude-haiku-4-5"
 
-JST = timezone(timedelta(hours=9))
+CLAUDE_API_KEY = os.environ["CLAUDE_API_KEY"]
+client_llm = Anthropic(api_key=CLAUDE_API_KEY)
 
-def now_jst() -> datetime:
-    return datetime.now(JST)
+X_API_KEY = os.environ["X_API_KEY"]
+X_API_SECRET = os.environ["X_API_SECRET"]
+X_ACCESS_TOKEN = os.environ["X_ACCESS_TOKEN"]
+X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
-# ===== X クライアント =====
-
-API_KEY = os.getenv("X_API_KEY")
-API_SECRET = os.getenv("X_API_SECRET")
-ACCESS_TOKEN = os.getenv("X_ACCESS_TOKEN")
-ACCESS_TOKEN_SECRET = os.getenv("X_ACCESS_TOKEN_SECRET")
-
-client = tweepy.Client(
-    consumer_key=API_KEY,
-    consumer_secret=API_SECRET,
-    access_token=ACCESS_TOKEN,
-    access_token_secret=ACCESS_TOKEN_SECRET,
-)
-
-def post_to_x(text: str):
-    print("POST_TO_X_CALLED")
-    print(
-        "ENV_CHECK:",
-        (API_KEY or "")[:4],
-        (ACCESS_TOKEN or "")[:4],
-    )
-    print("TEXT_LEN:", len(text))
-    print("TEXT:", text)
-
-    resp = client.create_tweet(text=text)
-    print("CREATE_TWEET_RESPONSE:", resp)
-    return resp
-
-# ===== LLM ダミー =====
-# ここは後で Claude 連携に差し替えればOK
 
 def generate_with_claude(prompt: str) -> str:
-    # とりあえず動作確認用の固定文
-    print("GENERATE_WITH_CLAUDE_CALLED")
-    return "テスト: 日本株 市場概況。詳細なコメントは後日対応予定。"
+    resp = client_llm.messages.create(
+        model=CLAUDE_MODEL,
+        max_tokens=260,
+        temperature=0.7,
+        messages=[{"role": "user", "content": prompt}],
+    )
+
+    content = resp.content
+    if isinstance(content, list) and content:
+        part = content[0]
+        if isinstance(part, dict) and "text" in part:
+            return part["text"].strip()
+        if hasattr(part, "text"):
+            return part.text.strip()
+    if hasattr(resp, "text"):
+        return resp.text.strip()
+    return str(resp)
+
+
+def post_to_x(text: str) -> None:
+    client = tweepy.Client(
+        consumer_key=X_API_KEY,
+        consumer_secret=X_API_SECRET,
+        access_token=X_ACCESS_TOKEN,
+        access_token_secret=X_ACCESS_TOKEN_SECRET,
+    )
+    client.create_tweet(text=text)  # [web:489][web:512]
+
+
+def now_jst() -> datetime.datetime:
+    jst = datetime.timezone(datetime.timedelta(hours=9))
+    return datetime.datetime.now(datetime.timezone.utc).astimezone(jst)
