@@ -78,7 +78,7 @@ def _build_asset(
 
 
 def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
-    # 日本株（TOPIXは使わない）
+    # 日本株
     nk225 = _build_asset("日経平均", "^N225")
 
     # 為替コア
