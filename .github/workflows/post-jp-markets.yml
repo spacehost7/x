@@ -1,14 +1,14 @@
-name: post-jp-markets
+name: jp-markets-full
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 1-5'
-    - cron: '0 6 * * 1-5'
+    - cron: '0 0 * * 1-5'   # 09:00 JST
+    - cron: '0 6 * * 1-5'   # 15:00 JST
 
 jobs:
   jp-morning:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 0 * * 1-5' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -34,7 +34,7 @@ jobs:
         run: python bot_jp_morning.py
 
   jp-close:
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event.schedule == '0 6 * * 1-5' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
