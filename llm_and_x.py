@@ -1,49 +1,31 @@
+# llm_and_x.py
+
 import os
-import datetime
 import tweepy
-from anthropic import Anthropic
 
-CLAUDE_MODEL = "claude-haiku-4-5"
+bearer_token = None  # 使ってないなら None でOK
+api_key = os.getenv("X_API_KEY")
+api_secret = os.getenv("X_API_SECRET")
+access_token = os.getenv("X_ACCESS_TOKEN")
+access_token_secret = os.getenv("X_ACCESS_TOKEN_SECRET")
 
-CLAUDE_API_KEY = os.environ["CLAUDE_API_KEY"]
-client_llm = Anthropic(api_key=CLAUDE_API_KEY)
+client = tweepy.Client(
+    consumer_key=api_key,
+    consumer_secret=api_secret,
+    access_token=access_token,
+    access_token_secret=access_token_secret,
+    bearer_token=bearer_token
+)
 
-X_API_KEY = os.environ["X_API_KEY"]
-X_API_SECRET = os.environ["X_API_SECRET"]
-X_ACCESS_TOKEN = os.environ["X_ACCESS_TOKEN"]
-X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
+def post_to_x(text: str):
+    print("POST_TO_X_CALLED")
+    print("ENV_CHECK:",
+          (api_key or "")[:4],
+          (access_token or "")[:4])
 
-
-def generate_with_claude(prompt: str) -> str:
-    resp = client_llm.messages.create(
-        model=CLAUDE_MODEL,
-        max_tokens=260,
-        temperature=0.7,
-        messages=[{"role": "user", "content": prompt}],
-    )
-
-    content = resp.content
-    if isinstance(content, list) and content:
-        part = content[0]
-        if isinstance(part, dict) and "text" in part:
-            return part["text"].strip()
-        if hasattr(part, "text"):
-            return part.text.strip()
-    if hasattr(resp, "text"):
-        return resp.text.strip()
-    return str(resp)
-
-
-def post_to_x(text: str) -> None:
-    client = tweepy.Client(
-        consumer_key=X_API_KEY,
-        consumer_secret=X_API_SECRET,
-        access_token=X_ACCESS_TOKEN,
-        access_token_secret=X_ACCESS_TOKEN_SECRET,
-    )
-    client.create_tweet(text=text)  # [web:489][web:512]
-
-
-def now_jst() -> datetime.datetime:
-    jst = datetime.timezone(datetime.timedelta(hours=9))
-    return datetime.datetime.now(datetime.timezone.utc).astimezone(jst)
+    try:
+        resp = client.create_tweet(text=text)
+        print("CREATE_TWEET_RESPONSE:", resp)
+    except Exception as e:
+        print("CREATE_TWEET_ERROR:", repr(e))
+        raise
