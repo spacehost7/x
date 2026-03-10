@@ -8,13 +8,11 @@ def main() -> None:
     snapshot = get_market_snapshot()
 
     nk = snapshot["core"]["nk225"]
-    tp = snapshot["core"]["topix"]
     uj = snapshot["core"]["usd_jpy"]
     eu = snapshot["core"]["eur_usd"]
 
     opt = snapshot["optional"]
 
-    # 急騰・急落 or 節目越えした資産だけを簡単にテキスト化して渡す
     special_lines = []
     for key in ["gold", "crude", "btc", "eur_jpy", "gbp_jpy", "aud_jpy"]:
         a = opt[key]
@@ -41,7 +39,6 @@ def main() -> None:
 
 【コア指標】（必ずコメントに含めること）
 - 日経平均: {nk.value:.2f} ({nk.diff:+.2f}, {nk.diff_pct:+.2f}%)
-- TOPIX: {tp.value:.2f} ({tp.diff:+.2f}, {tp.diff_pct:+.2f}%)
 - ドル円: {uj.value:.3f} ({uj.diff:+.3f}, {uj.diff_pct:+.2f}%)
 - ユーロドル: {eu.value:.5f} ({eu.diff:+.5f}, {eu.diff_pct:+.2f}%)
 
