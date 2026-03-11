@@ -1,94 +1,94 @@
-# market_data.py
-
 from dataclasses import dataclass
-from typing import Dict, Optional
-import datetime as dt
+from typing import Optional, Dict, List
+import datetime
 import yfinance as yf
 
-# ここは既存と同じ仮定
 @dataclass
 class AssetMove:
     name: str
     symbol: str
-    current: float
-    prev_close: float
-    change_abs: float
-    change_pct: float
-    big_move: bool
-    crossed_level: bool
-    crossed_levels: Optional[list] = None
+    value: float
+    prev_value: float
+    diff: float
+    diff_pct: float
+    big_move: bool = False
+    crossed_level: Optional[str] = None
+    direction: Optional[str] = None  # "up" / "down" / None
+
+def _now_jst() -> datetime.datetime:
+    jst = datetime.timezone(datetime.timedelta(hours=9))
+    return datetime.datetime.now(datetime.timezone.utc).astimezone(jst)
+
+def _latest_trading_day_jst() -> datetime.date:
+    now = _now_jst()
+    return now.date()
+
+def _fetch_series(symbol: str, days: int = 5):
+    d = _latest_trading_day_jst()
+    start = d - datetime.timedelta(days=days)
+    end = d + datetime.timedelta(days=1)
+    hist = yf.Ticker(symbol).history(start=start, end=end)
+    if hist.empty or len(hist) < 2:
+        raise RuntimeError(f"No enough data for {symbol}")
+    last = hist.iloc[-1]
+    prev = hist.iloc[-2]
+    return float(last["Close"]), float(prev["Close"])
 
 def _build_asset(
     name: str,
     symbol: str,
     big_move_threshold_pct: Optional[float] = None,
-    levels: Optional[list[float]] = None,
+    levels: Optional[List[float]] = None,
 ) -> AssetMove:
-    # 既存実装を想定（終値2本から前日比など算出）
-    end = dt.datetime.utcnow()
-    start = end - dt.timedelta(days=5)
-    data = yf.download(symbol, start=start, end=end, progress=False)
-    if data.empty or len(data["Close"]) < 2:
-        raise RuntimeError(f"not enough data for {symbol}")
-
-    current = float(data["Close"].iloc[-1])
-    prev_close = float(data["Close"].iloc[-2])
-    change_abs = current - prev_close
-    change_pct = (change_abs / prev_close) * 100
+    value, prev_value = _fetch_series(symbol)
+    diff = value - prev_value
+    diff_pct = diff / prev_value * 100 if prev_value != 0 else 0.0
+    direction = "up" if diff > 0 else "down" if diff < 0 else None
 
     big_move = False
-    if big_move_threshold_pct is not None:
-        big_move = abs(change_pct) >= big_move_threshold_pct
+    if big_move_threshold_pct is not None and abs(diff_pct) >= big_move_threshold_pct:
+        big_move = True
 
-    crossed_level = False
-    crossed_levels: list[float] = []
+    crossed_txt = None
     if levels:
         for lv in levels:
-            # 前日終値と当日終値でまたいだかどうか
-            if (prev_close < lv <= current) or (prev_close > lv >= current):
-                crossed_level = True
-                crossed_levels.append(lv)
+            if prev_value < lv <= value:
+                crossed_txt = f"{lv}を上抜け"
+            elif value <= lv < prev_value:
+                crossed_txt = f"{lv}を割り込む"
+            if crossed_txt:
+                break
 
     return AssetMove(
         name=name,
         symbol=symbol,
-        current=current,
-        prev_close=prev_close,
-        change_abs=change_abs,
-        change_pct=change_pct,
+        value=value,
+        prev_value=prev_value,
+        diff=diff,
+        diff_pct=diff_pct,
         big_move=big_move,
-        crossed_level=crossed_level,
-        crossed_levels=crossed_levels,
+        crossed_level=crossed_txt,
+        direction=direction,
     )
 
 def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
-    # 既存: 日本コア
-    nk225 = _build_asset("日経平均", "^N225", big_move_threshold_pct=2.0)
-    usd_jpy = _build_asset("ドル円", "JPY=X")  # 閾値は利用側で判定
+    # 日本株
+    nk225 = _build_asset("日経平均", "^N225")
+
+    # 為替コア
+    usd_jpy = _build_asset("ドル円", "JPY=X")
     eur_usd = _build_asset("ユーロドル", "EURUSD=X")
 
-    # 既存: オプショナル
-    gold = _build_asset(
-        "金先物",
-        "GC=F",
-        big_move_threshold_pct=2.0,
-        levels=[2000, 2100, 2200],
-    )
+    # コモディティ・仮想通貨・その他
+    gold = _build_asset("金先物", "GC=F", big_move_threshold_pct=2.0,
+                        levels=[2000, 2100, 2200])
     crude = _build_asset("原油先物", "CL=F", big_move_threshold_pct=3.0)
-    btc = _build_asset(
-        "ビットコイン",
-        "BTC-USD",
-        big_move_threshold_pct=5.0,
-        levels=[60000, 65000, 70000],
-    )
+    btc = _build_asset("ビットコイン", "BTC-USD", big_move_threshold_pct=5.0,
+                       levels=[60000, 65000, 70000])
+
     eur_jpy = _build_asset("ユーロ円", "EURJPY=X", big_move_threshold_pct=2.0)
     gbp_jpy = _build_asset("ポンド円", "GBPJPY=X", big_move_threshold_pct=2.0)
     aud_jpy = _build_asset("豪ドル円", "AUDJPY=X", big_move_threshold_pct=2.0)
-
-    # ★追加: US 株指数
-    djia = _build_asset("ダウ平均", "^DJI", big_move_threshold_pct=2.0)
-    nasdaq = _build_asset("ナスダック総合", "^IXIC", big_move_threshold_pct=2.0)
-    sp500 = _build_asset("S&P500", "^GSPC", big_move_threshold_pct=2.0)
 
     return {
         "core": {
@@ -103,11 +103,5 @@ def get_market_snapshot() -> Dict[str, Dict[str, AssetMove]]:
             "eur_jpy": eur_jpy,
             "gbp_jpy": gbp_jpy,
             "aud_jpy": aud_jpy,
-        },
-        # ★追加: US セクション
-        "us": {
-            "djia": djia,
-            "nasdaq": nasdaq,
-            "sp500": sp500,
         },
     }
