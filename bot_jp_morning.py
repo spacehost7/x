@@ -1,13 +1,11 @@
 from market_data import get_market_snapshot
-from llm_and_x import generate_with_claude, post_to_x, now_jst
-
+from llm_and_x import generate_with_claude, post_to_x_morning as post_to_x, now_jst
 
 def _format_jp_datetime_for_morning(now) -> str:
     # 例: 3月10日(火)11:30現在
     youbi = "月火水木金土日"[now.weekday()]
     # 前場引けは 11:30 固定で出す（実際の取得時刻とは切り離す）
     return f"{now.month}月{now.day}日({youbi})11:30現在"
-
 
 def _arrow_for_nk(diff_pct: float) -> str:
     # 日経: ±2%以上でマーク
@@ -17,7 +15,6 @@ def _arrow_for_nk(diff_pct: float) -> str:
         return "📉"
     return ""
 
-
 def _arrow_for_usdjpy(diff: float) -> str:
     # ドル円: ±0.50円以上でマーク
     if diff >= 0.50:
@@ -26,7 +23,6 @@ def _arrow_for_usdjpy(diff: float) -> str:
         return "📉"
     return ""
 
-
 def _arrow_for_eurusd(diff: float) -> str:
     # ユーロドル: ±0.05ドル以上でマーク
     if diff >= 0.05:
@@ -34,7 +30,6 @@ def _arrow_for_eurusd(diff: float) -> str:
     if diff <= -0.05:
         return "📉"
     return ""
-
 
 def main() -> None:
     now = now_jst()
@@ -115,12 +110,11 @@ def main() -> None:
 出力フォーマット:
 - ヘッダーはすでに存在するとみなし、あなたは「3行目以降に続く本文」だけを出力してください。
 - 説明文や前置きは不要で、Xにそのまま投稿される本文だけを出してください。
-"""
+""".strip()
 
     body = generate_with_claude(prompt)
     full_text = f"{header_text}\n{body.strip()}"
     post_to_x(full_text)
-
 
 if __name__ == "__main__":
     main()
