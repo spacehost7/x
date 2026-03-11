@@ -8,13 +8,13 @@ CLAUDE_MODEL = "claude-haiku-4-5"
 CLAUDE_API_KEY = os.environ["CLAUDE_API_KEY"]
 client_llm = Anthropic(api_key=CLAUDE_API_KEY)
 
-# 前場用
+# 前場用（既存App）
 X_API_KEY = os.environ["X_API_KEY"]
 X_API_SECRET = os.environ["X_API_SECRET"]
 X_ACCESS_TOKEN = os.environ["X_ACCESS_TOKEN"]
 X_ACCESS_TOKEN_SECRET = os.environ["X_ACCESS_TOKEN_SECRET"]
 
-# 後場用
+# 後場用（新App用。GitHub Secrets に追加しておくこと）
 X_API_KEY_CLOSE = os.environ["X_API_KEY_CLOSE"]
 X_API_SECRET_CLOSE = os.environ["X_API_SECRET_CLOSE"]
 X_ACCESS_TOKEN_CLOSE = os.environ["X_ACCESS_TOKEN_CLOSE"]
@@ -27,6 +27,7 @@ def generate_with_claude(prompt: str) -> str:
         temperature=0.7,
         messages=[{"role": "user", "content": prompt}],
     )
+
     content = resp.content
     if isinstance(content, list) and content:
         part = content[0]
