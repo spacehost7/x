@@ -20,6 +20,7 @@ def generate_with_claude(prompt: str) -> str:
         temperature=0.7,
         messages=[{"role": "user", "content": prompt}],
     )
+
     content = resp.content
     if isinstance(content, list) and content:
         part = content[0]
@@ -38,11 +39,7 @@ def post_to_x(text: str) -> None:
         access_token=X_ACCESS_TOKEN,
         access_token_secret=X_ACCESS_TOKEN_SECRET,
     )
-    try:
-        client.create_tweet(text=text)
-    except Exception as e:
-        print("X API error:", repr(e))
-        raise
+    client.create_tweet(text=text)  # [web:489][web:512]
 
 def now_jst() -> datetime.datetime:
     jst = datetime.timezone(datetime.timedelta(hours=9))
