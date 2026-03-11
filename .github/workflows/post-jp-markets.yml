@@ -1,10 +1,41 @@
-name: jp-markets-debug-close-only
+name: jp-markets
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '35 2 * * 1-5' # 11:35 JST 前場
+    - cron: '5 6 * * 1-5'  # 15:05 JST 引け後5分
 
 jobs:
+  jp-morning:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '35 2 * * 1-5'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install yfinance tweepy anthropic
+
+      - name: Run morning bot
+        env:
+          CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+          # 前場用App（既存）
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+        run: python bot_jp_morning.py
+
   jp-close:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '5 6 * * 1-5'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -23,8 +54,9 @@ jobs:
       - name: Run close bot
         env:
           CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
-          X_API_KEY: ${{ secrets.X_API_KEY }}
-          X_API_SECRET: ${{ secrets.X_API_SECRET }}
-          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
-          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          # 後場用App（新Appのキーをここに）
+          X_API_KEY_CLOSE: ${{ secrets.X_API_KEY_CLOSE }}
+          X_API_SECRET_CLOSE: ${{ secrets.X_API_SECRET_CLOSE }}
+          X_ACCESS_TOKEN_CLOSE: ${{ secrets.X_ACCESS_TOKEN_CLOSE }}
+          X_ACCESS_TOKEN_SECRET_CLOSE: ${{ secrets.X_ACCESS_TOKEN_SECRET_CLOSE }}
         run: python bot_jp_close.py
