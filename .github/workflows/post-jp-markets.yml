@@ -3,8 +3,8 @@ name: jp-markets
 on:
   workflow_dispatch:
   schedule:
-    - cron: '35 2 * * 1-5'  # 11:35 JST 前場
-    - cron: '5 6 * * 1-5'   # 15:05 JST 引け後5分
+    - cron: '35 2 * * 1-5' # 11:35 JST 前場
+    - cron: '5 6 * * 1-5'  # 15:05 JST 引け後5分
 
 jobs:
   jp-morning:
